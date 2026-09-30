@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 function ProductList() {
-  // Початковий список товарів у стані (useState)
+  // Початковий список товарів у стані
   const [products, setProducts] = useState([
     { id: 1, name: 'Ноутбук Lenovo IdeaPad', price: 25000, inStock: true },
     { id: 2, name: 'Бездротова миша Logitech', price: 800, inStock: true },
@@ -18,47 +18,47 @@ function ProductList() {
   // Стан для відображення помилки валідації
   const [error, setError] = useState('');
 
-  // Обробник відправки форми
+  // Обробник додавання нового товару
   const handleAddProduct = (e) => {
     e.preventDefault();
 
-    // Валідація: назва не порожня
     if (!name.trim()) {
       setError('Будь ласка, введіть назву товару.');
       return;
     }
 
-    // Валідація: ціна є додатним числом
     const parsedPrice = Number(price);
     if (!price || isNaN(parsedPrice) || parsedPrice <= 0) {
       setError('Будь ласка, введіть коректну ціну (додатне число).');
       return;
     }
 
-    // Генерація унікального ID (Date.now() + Math.random())
-    const newId = `${Date.now()}-${Math.random()}`;
-
-    // Новий об'єкт товару
     const newProduct = {
-      id: newId,
+      id: `${Date.now()}-${Math.random()}`,
       name: name.trim(),
       price: parsedPrice,
-      inStock: inStock
+      inStock
     };
 
-    // Додавання до кінця списку незмінним способом через оператор розширення (...)
-    setProducts([...products, newProduct]);
-
-    // Очищення форми та помилок
+    setProducts((prev) => [...prev, newProduct]);
     setName('');
     setPrice('');
     setInStock(true);
     setError('');
   };
 
+  // Обробник видалення товару з підтвердженням через window.confirm
+  const handleDeleteProduct = (id, productName) => {
+    const isConfirmed = window.confirm(`Ви дійсно бажаєте видалити товар "${productName}"?`);
+    
+    if (isConfirmed) {
+      setProducts((prevProducts) => prevProducts.filter((product) => product.id !== id));
+    }
+  };
+
   return (
     <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ textAlign: 'center' }}>Список товарів (Завдання 2)</h2>
+      <h2 style={{ textAlign: 'center' }}>Список товарів (Завдання 3)</h2>
 
       {/* Форма додавання нового товару */}
       <form 
@@ -126,7 +126,7 @@ function ProductList() {
         </button>
       </form>
 
-      {/* Відображення списку товарів */}
+      {/* Список товарів із кнопками видалення */}
       <ul style={{ listStyleType: 'none', padding: 0 }}>
         {products.map((product) => (
           <li
@@ -136,16 +136,34 @@ function ProductList() {
               margin: '8px 0',
               borderRadius: '4px',
               border: '1px solid #e0e0e0',
-              textAlign: 'center',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               fontWeight: product.inStock ? 'bold' : 'normal',
               color: product.inStock ? '#000000' : '#a0a0a0',
               backgroundColor: product.inStock ? '#ffffff' : '#f5f5f5'
             }}
           >
-            {product.name} — {product.price} грн 
-            <span>
-              {product.inStock ? ' (В наявності)' : ' (Немає на складі)'}
-            </span>
+            <div>
+              {product.name} — {product.price} грн 
+              <span>
+                {product.inStock ? ' (В наявності)' : ' (Немає на складі)'}
+              </span>
+            </div>
+
+            <button
+              onClick={() => handleDeleteProduct(product.id, product.name)}
+              style={{
+                backgroundColor: '#dc3545',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '6px 12px',
+                cursor: 'pointer'
+              }}
+            >
+              Видалити
+            </button>
           </li>
         ))}
       </ul>
