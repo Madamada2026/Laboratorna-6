@@ -16,13 +16,17 @@ function ProductList() {
   const [inStock, setInStock] = useState(true);
   const [error, setError] = useState('');
 
-  // Стан для режиму редагування (inline editing)
+  // Стан для inline-редагування
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editInStock, setEditInStock] = useState(true);
 
-  // Обробник додавання нового товару
+  // Стан для фільтрації та сортування (Завдання 5)
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'inStock', 'outOfStock'
+  const [sortOption, setSortOption] = useState('default'); // 'default', 'name-asc', 'name-desc', 'price-asc', 'price-desc'
+
+  // Додавання нового товару
   const handleAddProduct = (e) => {
     e.preventDefault();
 
@@ -51,7 +55,7 @@ function ProductList() {
     setError('');
   };
 
-  // Обробник видалення товару
+  // Видалення товару
   const handleDeleteProduct = (id, productName) => {
     const isConfirmed = window.confirm(`Ви дійсно бажаєте видалити товар "${productName}"?`);
     if (isConfirmed) {
@@ -59,7 +63,7 @@ function ProductList() {
     }
   };
 
-  // Перехід у режим редагування товару
+  // Редагування товару
   const handleStartEdit = (product) => {
     setEditingId(product.id);
     setEditName(product.name);
@@ -67,24 +71,13 @@ function ProductList() {
     setEditInStock(product.inStock);
   };
 
-  // Скасування редагування
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditName('');
-    setEditPrice('');
-    setEditInStock(true);
   };
 
-  // Збереження відредагованого товару
   const handleSaveEdit = (id) => {
-    if (!editName.trim()) {
-      alert('Назва товару не може бути порожньою.');
-      return;
-    }
-
-    const parsedPrice = Number(editPrice);
-    if (!editPrice || isNaN(parsedPrice) || parsedPrice <= 0) {
-      alert('Ціна повинна бути додатним числом.');
+    if (!editName.trim() || Number(editPrice) <= 0) {
+      alert('Будь ласка, введіть коректні дані.');
       return;
     }
 
@@ -94,7 +87,7 @@ function ProductList() {
           ? {
               ...product,
               name: editName.trim(),
-              price: parsedPrice,
+              price: Number(editPrice),
               inStock: editInStock
             }
           : product
@@ -104,9 +97,25 @@ function ProductList() {
     setEditingId(null);
   };
 
+  // 1. Фільтрація списку товарів (створення проміжного масиву)
+  const filteredProducts = products.filter((product) => {
+    if (filterStatus === 'inStock') return product.inStock;
+    if (filterStatus === 'outOfStock') return !product.inStock;
+    return true; // 'all'
+  });
+
+  // 2. Сортування на копії масиву (spread operator для запобігання мутації стану)
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortOption === 'name-asc') return a.name.localeCompare(b.name);
+    if (sortOption === 'name-desc') return b.name.localeCompare(a.name);
+    if (sortOption === 'price-asc') return a.price - b.price;
+    if (sortOption === 'price-desc') return b.price - a.price;
+    return 0; // 'default'
+  });
+
   return (
     <div style={{ maxWidth: '650px', margin: '20px auto', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ textAlign: 'center' }}>Список товарів (Завдання 4)</h2>
+      <h2 style={{ textAlign: 'center' }}>Список товарів (Завдання 5)</h2>
 
       {/* Форма додавання нового товару */}
       <form 
@@ -174,9 +183,72 @@ function ProductList() {
         </button>
       </form>
 
-      {/* Список товарів */}
+      {/* Елементи управління для Фільтрації та Сортування */}
+      <div 
+        style={{ 
+          backgroundColor: '#e9ecef', 
+          padding: '15px', 
+          borderRadius: '8px', 
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <label htmlFor="filterStatus" style={{ fontWeight: 'bold' }}>Фільтр за наявністю:</label>
+          <select
+            id="filterStatus"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          >
+            <option value="all">Всі товари</option>
+            <option value="inStock">Тільки в наявності</option>
+            <option value="outOfStock">Тільки відсутні</option>
+          </select>
+        </div>
+
+        <div>
+          <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Сортування:</span>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setSortOption('name-asc')}
+              style={{ padding: '6px 10px', backgroundColor: sortOption === 'name-asc' ? '#007bff' : '#fff', color: sortOption === 'name-asc' ? '#fff' : '#000', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Назва А-Я
+            </button>
+            <button
+              onClick={() => setSortOption('name-desc')}
+              style={{ padding: '6px 10px', backgroundColor: sortOption === 'name-desc' ? '#007bff' : '#fff', color: sortOption === 'name-desc' ? '#fff' : '#000', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Назва Я-А
+            </button>
+            <button
+              onClick={() => setSortOption('price-asc')}
+              style={{ padding: '6px 10px', backgroundColor: sortOption === 'price-asc' ? '#007bff' : '#fff', color: sortOption === 'price-asc' ? '#fff' : '#000', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Ціна: від дешевих
+            </button>
+            <button
+              onClick={() => setSortOption('price-desc')}
+              style={{ padding: '6px 10px', backgroundColor: sortOption === 'price-desc' ? '#007bff' : '#fff', color: sortOption === 'price-desc' ? '#fff' : '#000', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Ціна: від дорогих
+            </button>
+            <button
+              onClick={() => setSortOption('default')}
+              style={{ padding: '6px 10px', backgroundColor: sortOption === 'default' ? '#6c757d' : '#fff', color: sortOption === 'default' ? '#fff' : '#000', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Скинути
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Список відфільтрованих та відсортованих товарів */}
       <ul style={{ listStyleType: 'none', padding: 0 }}>
-        {products.map((product) => {
+        {sortedProducts.map((product) => {
           const isEditing = editingId === product.id;
 
           return (
@@ -195,7 +267,6 @@ function ProductList() {
               }}
             >
               {isEditing ? (
-                /* Режим редагування (Inline Edit) */
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                   <input
                     type="text"
@@ -233,7 +304,6 @@ function ProductList() {
                   </div>
                 </div>
               ) : (
-                /* Звичайний режим перегляду */
                 <>
                   <div style={{ fontWeight: product.inStock ? 'bold' : 'normal', color: product.inStock ? '#000000' : '#a0a0a0' }}>
                     {product.name} — {product.price} грн 
